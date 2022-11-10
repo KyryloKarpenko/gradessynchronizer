@@ -12,20 +12,20 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class GradesSynchronizerScheduler {
+public class CourseGradesSynchronizerScheduler {
 
     private final GradeRepository gradeRepository;
 
-    public GradesSynchronizerScheduler(GradeRepository gradeRepository) {
+    public CourseGradesSynchronizerScheduler(GradeRepository gradeRepository) {
         this.gradeRepository = gradeRepository;
     }
 
-    @Scheduled(cron = "0 0/1 * * * ?")
-    public void synchronizeGrades() {
-        List<Grade> grades = gradeRepository.findAllByTimemodifiedBetween(
+    @Scheduled(cron = "0 0/30 * * * ?")
+    public void synchronizeCourseGrades() {
+        List<Grade> courseGrades = gradeRepository.findAllByTimemodifiedBetweenAndGradeItem_Itemtype(
                 LocalDateTime.now().minusMinutes(30).toInstant(ZoneOffset.of("+02:00")).getEpochSecond(),
-                LocalDateTime.now().toInstant(ZoneOffset.of("+02:00")).getEpochSecond());
-        log.info("Found {} grades for the last 30 minutes", grades.size());
+                LocalDateTime.now().toInstant(ZoneOffset.of("+02:00")).getEpochSecond(), "course");
+        log.info("Found {} course grades for the last 30 minutes", courseGrades.size());
     }
 
 }

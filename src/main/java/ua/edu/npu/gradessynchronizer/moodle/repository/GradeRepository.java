@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface GradeRepository extends JpaRepository<Grade, Long> {
 
-    List<Grade> findAllByTimemodifiedBetween(Long from, Long to);
+    List<Grade> findAllByTimemodifiedBetweenAndGradeItem_Itemtype(Long from, Long to, String itemtype);
 
 }
