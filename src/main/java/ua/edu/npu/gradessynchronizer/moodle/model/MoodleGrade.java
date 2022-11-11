@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -17,19 +19,22 @@ import javax.persistence.JoinColumn;
 @RequiredArgsConstructor
 @Entity
 @Table(name = "mdl_grade_grades")
-public class Grade {
+public class MoodleGrade {
 
     @Id
     private Long id;
 
     private Long timemodified;
+    private Double finalgrade;
 
     @ManyToOne
     @JoinColumn(name = "userid")
-    private User user;
+    @NotFound(action = NotFoundAction.IGNORE)
+    private MoodleUser moodleUser;
 
     @ManyToOne
     @JoinColumn(name = "itemid")
-    private GradeItem gradeItem;
+    @NotFound(action = NotFoundAction.IGNORE)
+    private MoodleGradeItem moodleGradeItem;
 
 }

@@ -14,12 +14,12 @@ import javax.persistence.Table;
 @ToString
 @RequiredArgsConstructor
 @Entity
-@Table(name = "mdl_course")
-public class Course {
+@Table(name = "mdl_user")
+public class MoodleUser {
 
     @Id
     private Long id;
 
-    private String fullname;
+    private String username;
 
 }
