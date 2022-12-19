@@ -38,7 +38,7 @@ public class CourseGradesSynchronizerScheduler {
         this.journalGradeRepository = journalGradeRepository;
     }
 
-    @Scheduled(cron = "* 0/30 * * * ?")
+    @Scheduled(cron = "0 0/30 * * * ?")
     public void synchronizeCourseGrades() throws SQLException {
         List<MoodleGrade> moodleGrades =
                 moodleGradeRepository.findAllByFinalgradeNotNullAndTimemodifiedBetweenAndMoodleGradeItem_Itemtype(
@@ -63,8 +63,7 @@ public class CourseGradesSynchronizerScheduler {
                         .filter(moodleGrade -> moodleGrade.getMoodleUser() != null &&
                                 moodleGrade.getMoodleGradeItem() != null &&
                                 moodleGrade.getMoodleGradeItem().getMoodleCourse() != null)
-                        .filter(moodleGrade -> moodleGrade.getFinalgrade() != null &&
-                                moodleGrade.getFinalgrade() >= 60 && moodleGrade.getFinalgrade() <= 100)
+                        .filter(moodleGrade -> moodleGrade.getFinalgrade() != null)
                         .map(moodleGrade -> JournalGrade.builder()
                                 .moodleGradeId(JournalGradeId
                                         .builder()
