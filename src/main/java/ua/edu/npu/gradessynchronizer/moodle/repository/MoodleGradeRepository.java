@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface MoodleGradeRepository extends JpaRepository<MoodleGrade, Long> {
 
-    List<MoodleGrade> findAllByFinalgradeNotNullAndTimemodifiedBetweenAndMoodleGradeItem_Itemtype(Long from, Long to, String itemtype);
+    List<MoodleGrade> findAllByFinalgradeNotNullAndTimemodifiedBetweenAndMoodleGradeItem_Itemtype(Long from, Long to,
+                                                                                                  String itemtype);
 
 }

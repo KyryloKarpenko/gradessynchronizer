@@ -38,7 +38,7 @@ public class CourseGradesSynchronizerScheduler {
         this.journalGradeRepository = journalGradeRepository;
     }
 
-    @Scheduled(cron = "0 0/1 * * * ?")
+    @Scheduled(cron = "* 0/30 * * * ?")
     public void synchronizeCourseGrades() throws SQLException {
         List<MoodleGrade> moodleGrades =
                 moodleGradeRepository.findAllByFinalgradeNotNullAndTimemodifiedBetweenAndMoodleGradeItem_Itemtype(
@@ -47,32 +47,36 @@ public class CourseGradesSynchronizerScheduler {
 
         if (!moodleGrades.isEmpty()) {
             log.info("Found {} moodle grades for the last 30 minutes", moodleGrades.size());
-            Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
-            Statement s = connection.createStatement();
 
-            if (!s.executeQuery("select 1 from rdb$relations where rdb$relation_name = 'MOODLE_GRADES'").next()) {
-                log.info("Table MOODLE_GRADES was not found in journal database, will try to create it now");
-                s.execute("CREATE TABLE moodle_grades(course INTEGER NOT NULL,student VARCHAR(100) NOT NULL," +
-                        "grade DOUBLE PRECISION NOT NULL);");
-                s.execute("ALTER TABLE moodle_grades ADD PRIMARY KEY (course, student);");
-                log.info("Table MOODLE_GRADES was successfully created in journal database");
+            try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
+                 Statement s = connection.createStatement()) {
+
+                if (!s.executeQuery("select 1 from rdb$relations where rdb$relation_name = 'MOODLE_GRADES'").next()) {
+                    log.info("Table MOODLE_GRADES was not found in journal database, will try to create it now");
+                    s.execute("CREATE TABLE moodle_grades(course INTEGER NOT NULL,student VARCHAR(100) NOT NULL," +
+                            "grade DOUBLE PRECISION NOT NULL);");
+                    s.execute("ALTER TABLE moodle_grades ADD PRIMARY KEY (course, student);");
+                    log.info("Table MOODLE_GRADES was successfully created in journal database");
+                }
+
+                List<JournalGrade> journalGrades = journalGradeRepository.saveAll(moodleGrades.stream()
+                        .filter(moodleGrade -> moodleGrade.getMoodleUser() != null &&
+                                moodleGrade.getMoodleGradeItem() != null &&
+                                moodleGrade.getMoodleGradeItem().getMoodleCourse() != null)
+                        .filter(moodleGrade -> moodleGrade.getFinalgrade() != null &&
+                                moodleGrade.getFinalgrade() >= 60 && moodleGrade.getFinalgrade() <= 100)
+                        .map(moodleGrade -> JournalGrade.builder()
+                                .moodleGradeId(JournalGradeId
+                                        .builder()
+                                        .course(moodleGrade.getMoodleGradeItem().getMoodleCourse().getId())
+                                        .student(moodleGrade.getMoodleUser().getUsername())
+                                        .build())
+                                .grade(moodleGrade.getFinalgrade())
+                                .build())
+                        .toList());
+
+                log.info("{} moodle grades were successfully migrated to journal", journalGrades.size());
             }
-
-            List<JournalGrade> journalGrades = journalGradeRepository.saveAll(moodleGrades.stream()
-                    .filter(moodleGrade -> moodleGrade.getMoodleUser() != null &&
-                            moodleGrade.getMoodleGradeItem() != null &&
-                            moodleGrade.getMoodleGradeItem().getMoodleCourse() != null)
-                    .map(moodleGrade -> JournalGrade.builder()
-                            .moodleGradeId(JournalGradeId
-                                    .builder()
-                                    .course(moodleGrade.getMoodleGradeItem().getMoodleCourse().getId())
-                                    .student(moodleGrade.getMoodleUser().getUsername())
-                                    .build())
-                            .grade(moodleGrade.getFinalgrade())
-                            .build())
-                    .toList());
-
-            log.info("{} moodle grades were successfully migrated to journal", journalGrades.size());
         } else {
             log.info("There are no moodle grades for the last 30 minutes");
         }
